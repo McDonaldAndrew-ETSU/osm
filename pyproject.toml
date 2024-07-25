@@ -1,5 +1,6 @@
 [tool.poetry]
 name = "etaknavigator"
+package-mode = false
 version = "0.1.0"
 description = "Non-GPS navigation"
 authors = ["Andrew McDonald"]
