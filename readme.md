@@ -4,3 +4,4 @@
 4. potry install
 5. python save_map.py
 6. python main.py
+7. Ctrl + C to quit
