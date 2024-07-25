@@ -1,3 +1,5 @@
 /ccl.graphml
+cache
+__pycache__
 venv
 .venv
