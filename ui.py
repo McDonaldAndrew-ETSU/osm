@@ -47,7 +47,7 @@ class MapNavigator:
         self.cursor.set_data([position[1]], [position[0]])
         self.ax.draw_artist(self.cursor)
         self.fig.canvas.blit(self.ax.bbox)
-        print(f"Cursor position: {position}")
+        logger.info(f"Cursor position: {position}")
 
     def update_nearest_node(self, position):
         nearest_node, node_dist = ox.distance.nearest_nodes(
@@ -62,7 +62,7 @@ class MapNavigator:
         self.nn_line.set_data(x, y)
         self.ax.draw_artist(self.nn_line)
         self.fig.canvas.blit(self.ax.bbox)
-        print(f"Node Distance: {round(node_dist, 6)} meters")
+        logger.info(f"Node Distance: {round(node_dist, 6)} meters")
 
     def update_nearest_edge(self, position):
         # Find nearest edge and its geometry
@@ -86,9 +86,9 @@ class MapNavigator:
             self.ax.draw_artist(self.ne_line)
             # Convert from degrees to meters
             edge_dist = geodesic(
-                (position[0], position[1]), (edge_point.y, edge_point.x)
+                (position[1], position[0]), (edge_point.x, edge_point.y)
             ).meters
-        else:
+        elif self.prev_edge_point is not None:
             line = LineString(
                 [
                     (position[1], position[0]),
@@ -100,9 +100,12 @@ class MapNavigator:
             self.ax.draw_artist(self.ne_line)
             # Convert from degrees to meters
             edge_dist = geodesic(
-                (position[0], position[1]),
-                (self.prev_edge_point.y, self.prev_edge_point.x),
+                (position[1], position[0]),
+                (self.prev_edge_point.x, self.prev_edge_point.y),
             ).meters
+        else:
+            logger.info("No previous edge point available. Skipping line drawing.")
+            edge_dist = float("inf")
 
         self.fig.canvas.blit(self.ax.bbox)
-        print(f"Edge Distance: {round(edge_dist, 6)} meters")
+        logger.info(f"Edge Distance: {round(edge_dist, 6)} meters")
