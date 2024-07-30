@@ -4,12 +4,13 @@ from geopy.distance import geodesic
 from shapely.geometry import LineString, Point
 import matplotlib.pyplot as plt
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
-
 
 class MapNavigator:
     def __init__(self, graphml_path, initial_position):
+        self.logger = logging.getLogger(__name__)
+        logging.basicConfig(level=logging.INFO)
+
+        self.map_matching = False
         self.G = ox.io.load_graphml(filepath=graphml_path)
         self.position = initial_position
         self.prev_edge_point = None
@@ -44,12 +45,21 @@ class MapNavigator:
         self.background = self.fig.canvas.copy_from_bbox(self.ax.bbox)
 
     def update_cursor(self, position):
+        edge_dist = self._update_nearest_edge(position)
+        node_dist, node_position = self._update_nearest_node(position)
+        if self.map_matching:
+            # if edge_dist > 10 and node_dist < 10 and self.prev_edge_point is not None:
+            #     position = (node_position.x, node_position.y)
+            # el
+            if edge_dist > 10 and self.prev_edge_point is not None:
+                position = (self.prev_edge_point.x, self.prev_edge_point.y)
+
         self.cursor.set_data([position[1]], [position[0]])
         self.ax.draw_artist(self.cursor)
         self.fig.canvas.blit(self.ax.bbox)
-        logger.info(f"Cursor position: {position}")
+        self.logger.info(f"Cursor position: {position}")
 
-    def update_nearest_node(self, position):
+    def _update_nearest_node(self, position):
         nearest_node, node_dist = ox.distance.nearest_nodes(
             G=self.G, X=position[1], Y=position[0], return_dist=True
         )
@@ -62,9 +72,10 @@ class MapNavigator:
         self.nn_line.set_data(x, y)
         self.ax.draw_artist(self.nn_line)
         self.fig.canvas.blit(self.ax.bbox)
-        logger.info(f"Node Distance: {round(node_dist, 6)} meters")
+        self.logger.info(f"Node Distance: {round(node_dist, 6)} meters")
+        return node_dist, (nn_x, nn_y)
 
-    def update_nearest_edge(self, position):
+    def _update_nearest_edge(self, position):
         # Find nearest edge and its geometry
         nearest_edge, edge_dist = ox.distance.nearest_edges(
             G=self.G, X=position[1], Y=position[0], return_dist=True
@@ -104,8 +115,9 @@ class MapNavigator:
                 (self.prev_edge_point.x, self.prev_edge_point.y),
             ).meters
         else:
-            logger.info("No previous edge point available. Skipping line drawing.")
+            self.logger.info("No previous edge point available. Skipping line drawing.")
             edge_dist = float("inf")
 
         self.fig.canvas.blit(self.ax.bbox)
-        logger.info(f"Edge Distance: {round(edge_dist, 6)} meters")
+        self.logger.info(f"Edge Distance: {round(edge_dist, 6)} meters")
+        return edge_dist
