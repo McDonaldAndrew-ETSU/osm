@@ -48,12 +48,13 @@ class MapNavigator:
         edge_dist = self._update_nearest_edge(position)
         node_dist, node_position = self._update_nearest_node(position)
         if self.map_matching:
-            # if edge_dist > 10 and node_dist < 10 and self.prev_edge_point is not None:
-            #     position = (node_position.x, node_position.y)
-            # el
-            if edge_dist > 10 and self.prev_edge_point is not None:
-                position = (self.prev_edge_point.x, self.prev_edge_point.y)
+            if edge_dist > 10 and node_dist < 10 and self.prev_edge_point is not None:
+                # (lat, long) translates to (y, x) in Cartesian coordinates because latitude corresponds to the y-axis and longitude to the x-axis.
+                position = (node_position.y, node_position.x)
+            elif edge_dist > 10 and self.prev_edge_point is not None:
+                position = (self.prev_edge_point.y, self.prev_edge_point.x)
 
+        self.position = position
         self.cursor.set_data([position[1]], [position[0]])
         self.ax.draw_artist(self.cursor)
         self.fig.canvas.blit(self.ax.bbox)
@@ -97,7 +98,7 @@ class MapNavigator:
             self.ax.draw_artist(self.ne_line)
             # Convert from degrees to meters
             edge_dist = geodesic(
-                (position[1], position[0]), (edge_point.x, edge_point.y)
+                (position[0], position[1]), (edge_point.y, edge_point.x)
             ).meters
         elif self.prev_edge_point is not None:
             line = LineString(
@@ -111,8 +112,8 @@ class MapNavigator:
             self.ax.draw_artist(self.ne_line)
             # Convert from degrees to meters
             edge_dist = geodesic(
-                (position[1], position[0]),
-                (self.prev_edge_point.x, self.prev_edge_point.y),
+                (position[0], position[1]),
+                (self.prev_edge_point.y, self.prev_edge_point.x),
             ).meters
         else:
             self.logger.info("No previous edge point available. Skipping line drawing.")
