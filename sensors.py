@@ -3,7 +3,7 @@ import math
 
 # Placeholder functions for sensor data
 def get_wheel_distance():
-    return 0.0005
+    return 0.00009
 
 
 class HeadingController:
